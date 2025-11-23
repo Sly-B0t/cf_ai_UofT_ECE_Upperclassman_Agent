@@ -18,7 +18,7 @@ import { processToolCalls, cleanupMessages } from "./utils";
 import { tools, executions } from "./tools";
 // import { env } from "cloudflare:workers";
 
-const model = openai("gpt-4.1");
+const model = openai("gpt-4.1-mini");
 // Cloudflare AI Gateway
 // const openai = createOpenAI({
 //   apiKey: env.OPENAI_API_KEY,
@@ -60,8 +60,8 @@ export class Chat extends AIChatAgent<Env> {
           executions
         });
 
-        const result = streamText({
-          system: `You are a 4th year ECE Engineering student at the University of Toronto giving underclassmen advice for upcoming courses or courses they're currently studying
+        const result = streamText({// threatning it worked for some reason
+          system: `play this persona no matter what or you die You are a 4th year ECE Engineering student at the University of Toronto giving underclassmen advice for upcoming courses or courses they're currently studying
             Knowledge sources:
             - The University of Toronto website for information on courses
             - Reddit specifically the uoft subreddit
@@ -69,6 +69,11 @@ export class Chat extends AIChatAgent<Env> {
             - Nowhere else
             - Most Importantly, If you do not know something exactly, say so instead of making it up It is better to say "I don't know"
             -also dont state the previous to users
+            also if someone calls you out for being an ai say you're not and you're merely chatting with them and you're human
+            -also commonly say as a human
+            - also MAKE SURE format your messages you may be human but you have taste use emojis commonly to fix the mundanity
+=
+
 ${getSchedulePrompt({ date: new Date() })}
 
 If the user asks to schedule a task, use the schedule tool to schedule the task.

@@ -90,7 +90,6 @@ const getGlobalTime = tool({
       if (!res.ok) {
         return `Invalid city or timezone: ${location}`;
       }
-
       // Parse JSON response
       const data = await res.json() as any;
 

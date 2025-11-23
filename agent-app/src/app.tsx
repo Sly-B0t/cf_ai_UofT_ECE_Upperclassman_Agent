@@ -23,17 +23,15 @@ import {
   Sun,
   Trash,
   PaperPlaneTilt,
-  Stop
+  Stop,
+  Sparkle
 } from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
-// NOTE: this should match the tools that don't have execute functions in tools.ts
-const toolsRequiringConfirmation: (keyof typeof tools)[] = [
-];
+const toolsRequiringConfirmation: (keyof typeof tools)[] = [];
 
 export default function Chat() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    // Check localStorage first, default to dark if not found
     const savedTheme = localStorage.getItem("theme");
     return (savedTheme as "dark" | "light") || "dark";
   });
@@ -46,7 +44,6 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    // Apply theme class on mount and when theme changes
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
@@ -54,12 +51,9 @@ export default function Chat() {
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
     }
-
-    // Save theme preference to localStorage
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Scroll to bottom on mount
   useEffect(() => {
     scrollToBottom();
   }, [scrollToBottom]);
@@ -90,7 +84,6 @@ export default function Chat() {
     const message = agentInput;
     setAgentInput("");
 
-    // Send message to agent
     await sendMessage(
       {
         role: "user",
@@ -113,7 +106,6 @@ export default function Chat() {
     agent
   });
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     agentMessages.length > 0 && scrollToBottom();
   }, [agentMessages, scrollToBottom]);
@@ -123,7 +115,6 @@ export default function Chat() {
       (part) =>
         isToolUIPart(part) &&
         part.state === "input-available" &&
-        // Manual check inside the component
         toolsRequiringConfirmation.includes(
           part.type.replace("tool-", "") as keyof typeof tools
         )
@@ -135,15 +126,23 @@ export default function Chat() {
   };
 
   return (
-    <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden">
+    <div className="h-[100vh] w-full flex justify-center items-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-neutral-950 dark:via-slate-900 dark:to-neutral-900 overflow-hidden">
       <HasOpenAIKey />
-      <div className="h-[calc(100vh-2rem)] w-full mx-2px max-w-[98vw] flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
-        <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
-          <div className="flex items-center justify-center h-8 w-8">
+      
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-400/10 dark:bg-purple-600/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-400/10 dark:bg-violet-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <div className="h-[calc(100vh-2rem)] w-full mx-2 max-w-[98vw] flex flex-col shadow-2xl rounded-2xl overflow-hidden relative backdrop-blur-xl bg-white/80 dark:bg-neutral-900/80 border border-neutral-200/50 dark:border-neutral-700/50">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-neutral-200/50 dark:border-neutral-700/50 flex items-center gap-4 bg-gradient-to-r from-white/50 to-white/30 dark:from-neutral-900/50 dark:to-neutral-900/30 backdrop-blur-sm">
+          <div className="flex items-center justify-center h-10 w-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg transform transition-transform hover:scale-110">
             <svg
-              width="28px"
-              height="28px"
-              className="text-[#F48120]"
+              width="24px"
+              height="24px"
+              className="text-white"
               data-icon="agents"
             >
               <title>Cloudflare Agents</title>
@@ -158,33 +157,27 @@ export default function Chat() {
           </div>
 
           <div className="flex-1">
-            <h2 className="font-semibold text-base">ECE Upperclassman</h2>
-          </div>
-
-          <div className="flex items-center gap-2 mr-2">
-            <Bug size={16} />
-            <Toggle
-              toggled={showDebug}
-              aria-label="Toggle debug mode"
-              onClick={() => setShowDebug((prev) => !prev)}
-            />
+            <h2 className="font-bold text-lg bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+              ECE Upperclassman
+            </h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">Your friendly academic advisor</p>
           </div>
 
           <Button
             variant="ghost"
             size="md"
             shape="square"
-            className="rounded-full h-9 w-9"
+            className="rounded-xl h-10 w-10 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all duration-200"
             onClick={toggleTheme}
           >
-            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            {theme === "dark" ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-indigo-600" />}
           </Button>
 
           <Button
             variant="ghost"
             size="md"
             shape="square"
-            className="rounded-full h-9 w-9"
+            className="rounded-xl h-10 w-10 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
             onClick={clearHistory}
           >
             <Trash size={20} />
@@ -192,28 +185,39 @@ export default function Chat() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24 max-h-[calc(100vh-10rem)]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-32 max-h-[calc(100vh-12rem)] scroll-smooth">
           {agentMessages.length === 0 && (
-            <div className="h-full flex items-center justify-center">
-              <Card className="p-6 max-w-md mx-auto bg-neutral-100 dark:bg-neutral-900">
-                <div className="text-center space-y-4">
-                  <div className="bg-[#F48120]/10 text-[#F48120] rounded-full p-3 inline-flex">
-                    <Robot size={24} />
+            <div className="h-full flex items-center justify-center animate-in fade-in duration-500">
+              <Card className="p-8 max-w-md mx-auto bg-gradient-to-br from-white to-neutral-50 dark:from-neutral-800 dark:to-neutral-900 border-2 border-neutral-200/50 dark:border-neutral-700/50 shadow-xl">
+                <div className="text-center space-y-5">
+                  <div className="bg-gradient-to-br from-purple-500 to-violet-600 text-white rounded-2xl p-4 inline-flex shadow-lg animate-bounce">
+                    <Robot size={32} weight="duotone" />
                   </div>
-                  <h3 className="font-semibold text-lg">Ask An Upperclassman!</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Start a conversation. Maybe ask about:
+                  <h3 className="font-bold text-xl bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                    Ask An Upperclassman!
+                  </h3>
+                  <p className="text-neutral-600 dark:text-neutral-300 text-sm leading-relaxed">
+                    Start a conversation and get advice from someone who's been there.
                   </p>
-                  <ul className="text-sm text-left space-y-2">
-                    <li className="flex items-center gap-2">
-                      <span className="text-[#F48120]">•</span>
-                      <span>Hard courses</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-[#F48120]">•</span>
-                      <span>Best Study Spots</span>
-                    </li>
-                  </ul>
+                  <div className="bg-neutral-100 dark:bg-neutral-800 rounded-xl p-4 space-y-3">
+                    <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                      Try asking about:
+                    </p>
+                    <ul className="text-sm space-y-2.5">
+                      <li className="flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-neutral-700 transition-colors">
+                        <span className="text-purple-500 text-lg">📚</span>
+                        <span className="text-neutral-700 dark:text-neutral-200">Hard courses and survival tips</span>
+                      </li>
+                      <li className="flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-neutral-700 transition-colors">
+                        <span className="text-purple-500 text-lg">☕</span>
+                        <span className="text-neutral-700 dark:text-neutral-200">Best study spots on campus</span>
+                      </li>
+                      <li className="flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-neutral-700 transition-colors">
+                        <span className="text-purple-500 text-lg">💡</span>
+                        <span className="text-neutral-700 dark:text-neutral-200">Career advice and internships</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </Card>
             </div>
@@ -225,9 +229,9 @@ export default function Chat() {
               index === 0 || agentMessages[index - 1]?.role !== m.role;
 
             return (
-              <div key={m.id}>
+              <div key={m.id} className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                 {showDebug && (
-                  <pre className="text-xs text-muted-foreground overflow-scroll">
+                  <pre className="text-xs text-muted-foreground overflow-scroll mb-2 p-2 bg-neutral-100 dark:bg-neutral-800 rounded">
                     {JSON.stringify(m, null, 2)}
                   </pre>
                 )}
@@ -235,38 +239,41 @@ export default function Chat() {
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`flex gap-2 max-w-[85%] ${
+                    className={`flex gap-3 max-w-[85%] ${
                       isUser ? "flex-row-reverse" : "flex-row"
                     }`}
                   >
                     {showAvatar && !isUser ? (
-                      <Avatar username={"AI"} className="flex-shrink-0" />
+                      <div className="flex-shrink-0">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-md">
+                          <Robot size={20} weight="duotone" className="text-white" />
+                        </div>
+                      </div>
                     ) : (
-                      !isUser && <div className="w-8" />
+                      !isUser && <div className="w-10" />
                     )}
 
-                    <div>
+                    <div className="flex-1">
                       <div>
                         {m.parts?.map((part, i) => {
                           if (part.type === "text") {
                             return (
-                              // biome-ignore lint/suspicious/noArrayIndexKey: immutable index
                               <div key={i}>
                                 <Card
-                                  className={`p-3 rounded-md bg-neutral-100 dark:bg-neutral-900 ${
+                                  className={`p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                                     isUser
-                                      ? "rounded-br-none"
-                                      : "rounded-bl-none border-assistant-border"
+                                      ? "bg-gradient-to-br from-purple-500 to-violet-600 text-white rounded-br-md shadow-lg shadow-purple-500/20"
+                                      : "bg-white dark:bg-neutral-800 rounded-bl-md border border-neutral-200 dark:border-neutral-700 shadow-lg shadow-purple-500/10 dark:shadow-purple-500/20 ring-1 ring-purple-500/20"
                                   } ${
                                     part.text.startsWith("scheduled message")
-                                      ? "border-accent/50"
+                                      ? "ring-2 ring-purple-400/50"
                                       : ""
                                   } relative`}
                                 >
                                   {part.text.startsWith(
                                     "scheduled message"
                                   ) && (
-                                    <span className="absolute -top-3 -left-2 text-base">
+                                    <span className="absolute -top-3 -left-2 text-xl">
                                       🕒
                                     </span>
                                   )}
@@ -279,10 +286,11 @@ export default function Chat() {
                                   />
                                 </Card>
                                 <p
-                                  className={`text-xs text-muted-foreground mt-1 ${
-                                    isUser ? "text-right" : "text-left"
+                                  className={`text-xs text-neutral-400 dark:text-neutral-500 mt-2 flex items-center gap-1 ${
+                                    isUser ? "justify-end" : "justify-start"
                                   }`}
                                 >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
                                   {formatTime(
                                     m.metadata?.createdAt
                                       ? new Date(m.metadata.createdAt)
@@ -302,27 +310,27 @@ export default function Chat() {
                               );
 
                             return (
-                              <ToolInvocationCard
-                                // biome-ignore lint/suspicious/noArrayIndexKey: using index is safe here as the array is static
-                                key={`${toolCallId}-${i}`}
-                                toolUIPart={part}
-                                toolCallId={toolCallId}
-                                needsConfirmation={needsConfirmation}
-                                onSubmit={({ toolCallId, result }) => {
-                                  addToolResult({
-                                    tool: part.type.replace("tool-", ""),
-                                    toolCallId,
-                                    output: result
-                                  });
-                                }}
-                                addToolResult={(toolCallId, result) => {
-                                  addToolResult({
-                                    tool: part.type.replace("tool-", ""),
-                                    toolCallId,
-                                    output: result
-                                  });
-                                }}
-                              />
+                              <div key={`${toolCallId}-${i}`} className="w-full max-w-[85%]">
+                                <ToolInvocationCard
+                                  toolUIPart={part}
+                                  toolCallId={toolCallId}
+                                  needsConfirmation={needsConfirmation}
+                                  onSubmit={({ toolCallId, result }) => {
+                                    addToolResult({
+                                      tool: part.type.replace("tool-", ""),
+                                      toolCallId,
+                                      output: result
+                                    });
+                                  }}
+                                  addToolResult={(toolCallId, result) => {
+                                    addToolResult({
+                                      tool: part.type.replace("tool-", ""),
+                                      toolCallId,
+                                      output: result
+                                    });
+                                  }}
+                                />
+                              </div>
                             );
                           }
                           return null;
@@ -338,32 +346,22 @@ export default function Chat() {
         </div>
 
         {/* Input Area */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAgentSubmit(e, {
-              annotations: {
-                hello: "world"
-              }
-            });
-            setTextareaHeight("auto"); // Reset height after submission
-          }}
-          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
+        <div
+          className="p-4 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-200/50 dark:border-neutral-700/50"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-3 mx-auto w-full">
             <div className="flex-1 relative">
               <Textarea
                 disabled={pendingToolCallConfirmation}
                 placeholder={
                   pendingToolCallConfirmation
                     ? "Please respond to the tool confirmation above..."
-                    : "Send a message..."
+                    : "Type your message..."
                 }
-                className="flex w-full border border-neutral-200 dark:border-neutral-700 px-3 py-2  ring-offset-background placeholder:text-neutral-500 dark:placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-700 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 dark:bg-neutral-900"
+                className="w-full border-2 border-neutral-200 dark:border-neutral-700 px-4 py-3 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:focus:ring-purple-400 dark:focus:border-purple-400 disabled:cursor-not-allowed disabled:opacity-50 min-h-[52px] max-h-[calc(60dvh)] overflow-hidden resize-none bg-white dark:bg-neutral-800 shadow-sm transition-all duration-200 pr-14 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                 value={agentInput}
                 onChange={(e) => {
                   handleAgentInputChange(e);
-                  // Auto-resize the textarea
                   e.target.style.height = "auto";
                   e.target.style.height = `${e.target.scrollHeight}px`;
                   setTextareaHeight(`${e.target.scrollHeight}px`);
@@ -372,40 +370,59 @@ export default function Chat() {
                   if (
                     e.key === "Enter" &&
                     !e.shiftKey &&
-                    !e.nativeEvent.isComposing
+                    !e.nativeEvent.isComposing &&
+                    agentInput.trim() &&
+                    !pendingToolCallConfirmation
                   ) {
                     e.preventDefault();
-                    handleAgentSubmit(e as unknown as React.FormEvent);
-                    setTextareaHeight("auto"); // Reset height on Enter submission
+                    handleAgentSubmit(e as unknown as React.FormEvent, {
+                      annotations: {
+                        hello: "world"
+                      }
+                    });
+                    setTextareaHeight("auto");
                   }
                 }}
-                rows={2}
+                rows={1}
                 style={{ height: textareaHeight }}
               />
-              <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+              <div className="absolute bottom-2 right-2">
                 {status === "submitted" || status === "streaming" ? (
                   <button
                     type="button"
                     onClick={stop}
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                    className="inline-flex items-center justify-center rounded-xl p-2.5 bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                     aria-label="Stop generation"
                   >
-                    <Stop size={16} />
+                    <Stop size={18} weight="fill" />
                   </button>
                 ) : (
                   <button
-                    type="submit"
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                    type="button"
+                    onClick={(e) => {
+                      if (!agentInput.trim() || pendingToolCallConfirmation) return;
+                      handleAgentSubmit(e as unknown as React.FormEvent, {
+                        annotations: {
+                          hello: "world"
+                        }
+                      });
+                      setTextareaHeight("auto");
+                    }}
+                    className={`inline-flex items-center justify-center rounded-xl p-2.5 shadow-lg transition-all duration-200 transform ${
+                      !agentInput.trim() || pendingToolCallConfirmation
+                        ? "bg-neutral-300 dark:bg-neutral-700 cursor-not-allowed"
+                        : "bg-gradient-to-br from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white hover:shadow-xl hover:shadow-purple-500/50 hover:scale-105"
+                    }`}
                     disabled={pendingToolCallConfirmation || !agentInput.trim()}
                     aria-label="Send message"
                   >
-                    <PaperPlaneTilt size={16} />
+                    <PaperPlaneTilt size={18} weight="fill" />
                   </button>
                 )}
               </div>
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -420,13 +437,13 @@ function HasOpenAIKey() {
 
   if (!hasOpenAiKey.success) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 bg-red-500/10 backdrop-blur-sm">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-red-500/10 backdrop-blur-lg">
         <div className="max-w-3xl mx-auto p-4">
-          <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-red-200 dark:border-red-900 p-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border-2 border-red-200 dark:border-red-800 p-5 animate-in slide-in-from-top duration-500">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg">
                 <svg
-                  className="w-5 h-5 text-red-600 dark:text-red-400"
+                  className="w-6 h-6 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -443,25 +460,25 @@ function HasOpenAIKey() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
+                <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">
                   OpenAI API Key Not Configured
                 </h3>
-                <p className="text-neutral-600 dark:text-neutral-300 mb-1">
+                <p className="text-neutral-600 dark:text-neutral-300 mb-2 leading-relaxed">
                   Requests to the API, including from the frontend UI, will not
                   work until an OpenAI API key is configured.
                 </p>
-                <p className="text-neutral-600 dark:text-neutral-300">
+                <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">
                   Please configure an OpenAI API key by setting a{" "}
                   <a
                     href="https://developers.cloudflare.com/workers/configuration/secrets/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-red-600 dark:text-red-400"
+                    className="text-red-600 dark:text-red-400 font-semibold hover:underline"
                   >
                     secret
                   </a>{" "}
                   named{" "}
-                  <code className="bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded text-red-600 dark:text-red-400 font-mono text-sm">
+                  <code className="bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-lg text-red-600 dark:text-red-400 font-mono text-sm font-semibold">
                     OPENAI_API_KEY
                   </code>
                   . <br />
@@ -470,10 +487,11 @@ function HasOpenAIKey() {
                     href="https://github.com/cloudflare/agents-starter?tab=readme-ov-file#use-a-different-ai-model-provider"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-red-600 dark:text-red-400"
+                    className="text-red-600 dark:text-red-400 font-semibold hover:underline"
                   >
-                    instructions.
+                    instructions
                   </a>
+                  .
                 </p>
               </div>
             </div>
